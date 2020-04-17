@@ -22,6 +22,20 @@ test(function () use ($preprocessor) { // basic
 });
 
 
+test(function () use ($preprocessor) { // no parameters
+	[$sql, $params] = $preprocessor->process(['UNKNOWN a = ?, b = ?, c = ?, d = ?, e = ?', 123, 'abc', true, false, null]);
+	Assert::same("UNKNOWN a = 123, b = 'abc', c = 1, d = 0, e = NULL", $sql);
+	Assert::same([], $params);
+});
+
+
+test(function () use ($preprocessor) { // recognizes command in braces
+	[$sql, $params] = $preprocessor->process(['(SELECT ?) UNION (SELECT ?)', 1, 2]);
+	Assert::same('(SELECT ?) UNION (SELECT ?)', $sql);
+	Assert::same([1, 2], $params);
+});
+
+
 test(function () use ($preprocessor) { // arg without placeholder
 	[$sql, $params] = $preprocessor->process(['SELECT id FROM author WHERE id =', 11]);
 	Assert::same('SELECT id FROM author WHERE id = ?', $sql);
@@ -344,6 +358,36 @@ test(function () use ($preprocessor) { // multi insert
 	[$sql, $params] = $preprocessor->process(['INSERT INTO author', [
 		['name' => 'Catelyn Stark', 'born' => new DateTime('2011-11-11')],
 		['name' => 'Sansa Stark', 'born' => new DateTime('2021-11-11')],
+	]]);
+
+	Assert::same(reformat([
+		'sqlite' => 'INSERT INTO author ([name], [born]) SELECT ?, 1320966000 UNION ALL SELECT ?, 1636585200',
+		'sqlsrv' => "INSERT INTO author ([name], [born]) VALUES (?, '2011-11-11T00:00:00'), (?, '2021-11-11T00:00:00')",
+		"INSERT INTO author ([name], [born]) VALUES (?, '2011-11-11 00:00:00'), (?, '2021-11-11 00:00:00')",
+	]), $sql);
+	Assert::same(['Catelyn Stark', 'Sansa Stark'], $params);
+});
+
+
+test(function () use ($preprocessor) { // multi insert & Rows
+	[$sql, $params] = $preprocessor->process(['INSERT INTO author', [
+		Nette\Database\Row::from(['name' => 'Catelyn Stark', 'born' => new DateTime('2011-11-11')]),
+		Nette\Database\Row::from(['name' => 'Sansa Stark', 'born' => new DateTime('2021-11-11')]),
+	]]);
+
+	Assert::same(reformat([
+		'sqlite' => 'INSERT INTO author ([name], [born]) SELECT ?, 1320966000 UNION ALL SELECT ?, 1636585200',
+		'sqlsrv' => "INSERT INTO author ([name], [born]) VALUES (?, '2011-11-11T00:00:00'), (?, '2021-11-11T00:00:00')",
+		"INSERT INTO author ([name], [born]) VALUES (?, '2011-11-11 00:00:00'), (?, '2021-11-11 00:00:00')",
+	]), $sql);
+	Assert::same(['Catelyn Stark', 'Sansa Stark'], $params);
+});
+
+
+test(function () use ($preprocessor) { // multi insert respects keys
+	[$sql, $params] = $preprocessor->process(['INSERT INTO author', [
+		['name' => 'Catelyn Stark', 'born' => new DateTime('2011-11-11')],
+		['born' => new DateTime('2021-11-11'), 'name' => 'Sansa Stark'],
 	]]);
 
 	Assert::same(reformat([
