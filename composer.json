@@ -1,7 +1,7 @@
 {
-	"name": "nette/database",
-	"description": "💾 Nette Database: layer with a familiar PDO-like API but much more powerful. Building queries, advanced joins, drivers for MySQL, PostgreSQL, SQLite, MS SQL Server and Oracle.",
-	"keywords": ["nette", "database", "notorm", "queries", "pdo", "mysql", "postgresql", "sqlite", "mssql", "oracle"],
+	"name": "matysdlx/database",
+	"description": "Custom version of nette database with entity resolver",
+	"keywords": ["nette", "database"],
 	"homepage": "https://nette.org",
 	"license": ["BSD-3-Clause", "GPL-2.0-only", "GPL-3.0-only"],
 	"authors": [
@@ -12,6 +12,9 @@
 		{
 			"name": "Nette Community",
 			"homepage": "https://nette.org/contributors"
+		},
+		{
+			"name": "Michal Matyas"
 		}
 	],
 	"require": {
